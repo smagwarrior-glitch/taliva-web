@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Minimal safe config for Vercel + App Router
 };
 
 export default nextConfig;
