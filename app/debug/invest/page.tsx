@@ -1,4 +1,4 @@
-import InvestCTA from "@/app/components/InvestCTA";
+import InvestCTA from "../../components/InvestCTA";
 
 export default function DebugInvestPage() {
   return (
