@@ -1,41 +1,24 @@
-// app/athlete/[id]/page.tsx
-
+import Link from "next/link";
+import LangSwitch from "@/app/components/LangSwitch";
 import InvestCTA from "@/app/components/InvestCTA";
 
 type Lang = "fa" | "en";
-
 function getLang(searchParams: Record<string, string | string[] | undefined>): Lang {
   const raw = searchParams.lang;
   const v = Array.isArray(raw) ? raw[0] : raw;
   return v === "fa" ? "fa" : "en";
 }
-
-function money(n: number) {
-  return n.toLocaleString();
-}
-
 function pct(n: number) {
   return `${Math.max(0, Math.min(100, Math.round(n)))}%`;
 }
 
-type Athlete = {
-  id: string;
-  nameEn: string;
-  nameFa: string;
-  sportEn: string;
-  sportFa: string;
-  cityEn: string;
-  cityFa: string;
-  score: number;
-  tier: "A" | "B" | "C" | "D";
-  tierWeight: number; // (درصد)
-  goal: number; // USDC
-  raised: number; // USDC
-  bioEn: string;
-  bioFa: string;
+const athletes: Record<string, any> = {
+  a1: { en: "Sample Athlete 1", fa: "نمونه ورزشکار ۱", sportEn: "Football", sportFa: "فوتبال", score: 84, goal: 5000, raised: 3100, tierWeight: 62 },
+  a2: { en: "Sample Athlete 2", fa: "نمونه ورزشکار ۲", sportEn: "Wrestling", sportFa: "کشتی", score: 78, goal: 5000, raised: 2050, tierWeight: 48 },
+  a3: { en: "Sample Athlete 3", fa: "نمونه ورزشکار ۳", sportEn: "Volleyball", sportFa: "والیبال", score: 81, goal: 5000, raised: 2750, tierWeight: 58 },
 };
 
-export default function AthleteProfilePage({
+export default function AthleteProfile({
   params,
   searchParams,
 }: {
@@ -43,59 +26,55 @@ export default function AthleteProfilePage({
   searchParams: Record<string, string | string[] | undefined>;
 }) {
   const lang = getLang(searchParams);
+  const isFa = lang === "fa";
 
-  // ⚠️ این بخش Sample هست. اگر دیتات رو از DB/API می‌گیری، همین athlete رو با داده واقعی جایگزین کن.
-  const athlete: Athlete = {
-    id: params.id,
-    nameEn: "Sample Athlete",
-    nameFa: "ورزشکار نمونه",
-    sportEn: "Football",
-    sportFa: "فوتبال",
-    cityEn: "Tehran",
-    cityFa: "تهران",
-    score: 84,
-    tier: "C",
-    tierWeight: 60,
-    goal: 10000,
-    raised: 2500,
-    bioEn: "Short bio about the athlete.",
-    bioFa: "یک بیو کوتاه درباره ورزشکار.",
-  };
-
-  const athleteName = lang === "fa" ? athlete.nameFa : athlete.nameEn;
-  const sport = lang === "fa" ? athlete.sportFa : athlete.sportEn;
-  const city = lang === "fa" ? athlete.cityFa : athlete.cityEn;
+  const a = athletes[params.id] ?? athletes.a1;
+  const fundedPct = (a.raised / a.goal) * 100;
+  const athleteName = isFa ? a.fa : a.en;
 
   return (
-    <main className="p-8">
-      <h1 className="text-2xl font-bold">{athleteName}</h1>
-      <p className="mt-2 text-gray-600">
-        {sport} • {city} • TALIVA Score {athlete.score}
-      </p>
-
-      <div className="mt-6">
-        {/* ✅ جای درست InvestCTA: داخل return */}
-        <InvestCTA lang={lang} athleteName={athleteName} />
+    <main className={`container ${isFa ? "direction-rtl" : ""}`}>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
+        <Link href={`/investor/athletes?lang=${lang}`} className="small">← {isFa ? "بازگشت" : "Back"}</Link>
+        <LangSwitch hrefBase={`/athlete/${params.id}`} lang={lang} />
       </div>
 
-      <div className="mt-8 space-y-2">
-        <div>
-          <span className="font-semibold">{lang === "fa" ? "هدف:" : "Goal:"}</span>{" "}
-          {money(athlete.goal)} USDC
-        </div>
-        <div>
-          <span className="font-semibold">{lang === "fa" ? "جمع‌آوری شده:" : "Raised:"}</span>{" "}
-          {money(athlete.raised)} USDC
-        </div>
-        <div>
-          <span className="font-semibold">{lang === "fa" ? "پیشرفت:" : "Progress:"}</span>{" "}
-          {pct((athlete.raised / Math.max(1, athlete.goal)) * 100)}
-        </div>
-      </div>
+      <div className="grid" style={{ marginTop: 14 }}>
+        <div className="card col-8">
+          <div style={{ fontSize: 26, fontWeight: 1000 }}>{athleteName}</div>
+          <div className="small" style={{ marginTop: 6 }}>
+            {isFa ? a.sportFa : a.sportEn} • TALIVA {a.score}
+          </div>
 
-      <div className="mt-10">
-        <h2 className="text-lg font-semibold">{lang === "fa" ? "داستان" : "Story"}</h2>
-        <p className="mt-2 text-gray-700">{lang === "fa" ? athlete.bioFa : athlete.bioEn}</p>
+          <div className="card" style={{ marginTop: 14, background: "rgba(0,0,0,0.25)" }}>
+            <div className="small">{isFa ? "شاخص ارزش متوسط" : "Avg Value Indicator"}</div>
+            <div className="progress" style={{ marginTop: 8 }}>
+              <div style={{ width: pct(a.tierWeight) }} />
+            </div>
+            <div className="small" style={{ marginTop: 8 }}>{pct(a.tierWeight)}</div>
+          </div>
+        </div>
+
+        <div className="card col-4">
+          <div style={{ fontWeight: 900 }}>{isFa ? "جذب سرمایه" : "Funding"}</div>
+          <div className="small" style={{ marginTop: 10 }}>
+            {isFa ? "جمع‌شده" : "Raised"}: <b>{a.raised}</b> / {a.goal} USDC
+          </div>
+          <div className="progress" style={{ marginTop: 10 }}>
+            <div style={{ width: pct(fundedPct) }} />
+          </div>
+          <div className="small" style={{ marginTop: 8 }}>{pct(fundedPct)} funded</div>
+
+          <div style={{ marginTop: 12 }}>
+            <InvestCTA lang={lang} athleteName={athleteName} />
+          </div>
+
+          <div style={{ marginTop: 10 }}>
+            <Link className="btn" style={{ width: "100%" }} href={`/athlete/apply?lang=${lang}`}>
+              {isFa ? "اپلای ورزشکار" : "Athlete apply"}
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
   );

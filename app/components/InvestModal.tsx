@@ -16,16 +16,18 @@ export default function InvestModal({
   athleteName: string;
 }) {
   const isFa = lang === "fa";
-  const [amount, setAmount] = useState<string>("");
+  const [amount, setAmount] = useState<number | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!open) setAmount("");
+    if (!open) {
+      setAmount(null);
+      setSuccess(false);
+    }
   }, [open]);
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
@@ -33,62 +35,78 @@ export default function InvestModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999]">
-      {/* Backdrop */}
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999 }}>
       <button
-        type="button"
-        aria-label="Close"
-        className="absolute inset-0 bg-black/60"
+        aria-label="close"
         onClick={onClose}
+        style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", border: "none" }}
       />
-
-      {/* Modal */}
-      <div className="absolute left-1/2 top-1/2 w-[92%] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 bg-[#0b0f14] p-5 text-white shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="text-sm text-white/70">
-              {isFa ? "ورزشکار:" : "Athlete:"}
+      <div
+        className="card"
+        style={{
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+          width: "92%",
+          maxWidth: 420,
+          background: "#0b0f14",
+        }}
+      >
+        {!success ? (
+          <>
+            <div style={{ fontSize: 18, fontWeight: 900 }}>
+              {isFa ? "سرمایه‌گذاری (دمو)" : "Invest (Demo)"}
             </div>
-            <div className="text-lg font-bold">{athleteName}</div>
-          </div>
+            <div className="small" style={{ marginTop: 6 }}>
+              {isFa ? "ورزشکار:" : "Athlete:"} <b>{athleteName}</b>
+            </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-1 text-sm text-white/70 hover:bg-white/10"
-          >
-            {isFa ? "بستن" : "Close"}
-          </button>
-        </div>
+            <div style={{ marginTop: 14 }} className="small">
+              {isFa ? "مبلغ (USDC)" : "Amount (USDC)"}
+            </div>
 
-        <div className="mt-4">
-          <label className="text-sm text-white/70">
-            {isFa ? "مبلغ (USDC)" : "Amount (USDC)"}
-          </label>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            placeholder={isFa ? "مثلاً 100" : "e.g. 100"}
-            className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-white/25"
-          />
-        </div>
+            <div className="row" style={{ marginTop: 10 }}>
+              {[100, 250, 500].map((v) => (
+                <button
+                  key={v}
+                  className={`btn ${amount === v ? "btn-primary" : ""}`}
+                  onClick={() => setAmount(v)}
+                  type="button"
+                  style={{ flex: 1 }}
+                >
+                  {v} USDC
+                </button>
+              ))}
+            </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            alert(isFa ? "دمو: ثبت شد ✅" : "Demo: Submitted ✅");
-            onClose();
-          }}
-          className="mt-4 w-full rounded-xl bg-[#50FF9D] px-4 py-3 text-sm font-semibold text-black"
-        >
-          {isFa ? "تایید سرمایه‌گذاری (دمو)" : "Confirm Investment (Demo)"}
-        </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={!amount}
+              onClick={() => setSuccess(true)}
+              style={{ width: "100%", marginTop: 14, opacity: !amount ? 0.5 : 1 }}
+            >
+              {isFa ? "تأیید" : "Confirm"}
+            </button>
 
-        <p className="mt-3 text-xs text-white/50">
-          {isFa
-            ? "این فقط دمو است و تراکنش واقعی انجام نمی‌شود."
-            : "This is a demo. No real transaction happens."}
-        </p>
+            <button type="button" className="btn" onClick={onClose} style={{ width: "100%", marginTop: 10 }}>
+              {isFa ? "انصراف" : "Cancel"}
+            </button>
+          </>
+        ) : (
+          <>
+            <div style={{ fontSize: 18, fontWeight: 900, color: "#50FF90" }}>
+              {isFa ? "ثبت شد 🎉" : "Success 🎉"}
+            </div>
+            <div className="small" style={{ marginTop: 8 }}>
+              {isFa ? "این یک تراکنش دمو بود. پول واقعی جابه‌جا نشد." : "This was a demo. No real funds moved."}
+            </div>
+            <button type="button" className="btn btn-primary" onClick={onClose} style={{ width: "100%", marginTop: 14 }}>
+              {isFa ? "بستن" : "Close"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
