@@ -1,16 +1,9 @@
 import Link from "next/link";
 import LangSwitch from "./components/LangSwitch";
+import { getLang, type SearchParams } from "./lib/i18n";
 
-type Lang = "fa" | "en";
-
-function getLang(searchParams: Record<string, string | string[] | undefined>): Lang {
-  const raw = searchParams.lang;
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  return v === "fa" ? "fa" : "en";
-}
-
-export default function Home({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
-  const lang = getLang(searchParams);
+export default async function Home({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const lang = getLang(await searchParams);
   const isFa = lang === "fa";
 
   return (

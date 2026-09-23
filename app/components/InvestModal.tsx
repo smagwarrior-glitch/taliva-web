@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type Lang = "fa" | "en";
 
@@ -19,30 +19,32 @@ export default function InvestModal({
   const [amount, setAmount] = useState<number | null>(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!open) {
-      setAmount(null);
-      setSuccess(false);
-    }
-  }, [open]);
+  const close = useCallback(() => {
+    setAmount(null);
+    setSuccess(false);
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && close();
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, close]);
 
   if (!open) return null;
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9999 }}>
       <button
-        aria-label="close"
-        onClick={onClose}
+        aria-label={isFa ? "بستن پنجره" : "Close dialog"}
+        onClick={close}
         style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.65)", border: "none" }}
       />
       <div
         className="card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="invest-dialog-title"
         style={{
           position: "absolute",
           left: "50%",
@@ -55,14 +57,14 @@ export default function InvestModal({
       >
         {!success ? (
           <>
-            <div style={{ fontSize: 18, fontWeight: 900 }}>
+            <h2 id="invest-dialog-title" style={{ fontSize: 18, fontWeight: 900 }}>
               {isFa ? "سرمایه‌گذاری (دمو)" : "Invest (Demo)"}
-            </div>
+            </h2>
             <div className="small" style={{ marginTop: 6 }}>
               {isFa ? "ورزشکار:" : "Athlete:"} <b>{athleteName}</b>
             </div>
 
-            <div style={{ marginTop: 14 }} className="small">
+            <div id="amount-label" style={{ marginTop: 14 }} className="small">
               {isFa ? "مبلغ (USDC)" : "Amount (USDC)"}
             </div>
 
@@ -70,6 +72,7 @@ export default function InvestModal({
               {[100, 250, 500].map((v) => (
                 <button
                   key={v}
+                  aria-describedby="amount-label"
                   className={`btn ${amount === v ? "btn-primary" : ""}`}
                   onClick={() => setAmount(v)}
                   type="button"
@@ -90,19 +93,19 @@ export default function InvestModal({
               {isFa ? "تأیید" : "Confirm"}
             </button>
 
-            <button type="button" className="btn" onClick={onClose} style={{ width: "100%", marginTop: 10 }}>
+            <button type="button" className="btn" onClick={close} style={{ width: "100%", marginTop: 10 }}>
               {isFa ? "انصراف" : "Cancel"}
             </button>
           </>
         ) : (
           <>
-            <div style={{ fontSize: 18, fontWeight: 900, color: "#50FF90" }}>
+            <h2 id="invest-dialog-title" style={{ fontSize: 18, fontWeight: 900, color: "#50FF90" }}>
               {isFa ? "ثبت شد 🎉" : "Success 🎉"}
-            </div>
+            </h2>
             <div className="small" style={{ marginTop: 8 }}>
               {isFa ? "این یک تراکنش دمو بود. پول واقعی جابه‌جا نشد." : "This was a demo. No real funds moved."}
             </div>
-            <button type="button" className="btn btn-primary" onClick={onClose} style={{ width: "100%", marginTop: 14 }}>
+            <button type="button" className="btn btn-primary" onClick={close} style={{ width: "100%", marginTop: 14 }}>
               {isFa ? "بستن" : "Close"}
             </button>
           </>
