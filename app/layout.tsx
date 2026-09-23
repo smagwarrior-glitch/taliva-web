@@ -1,4 +1,6 @@
 import "./globals.css";
+import { Suspense } from "react";
+import Header from "./components/Header";
 
 export const metadata = {
   title: "TALIVA",
@@ -12,7 +14,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-black text-white">{children}</body>
+      <body className="bg-black text-white">
+        <Suspense fallback={<div className="site-header" aria-hidden="true"><div className="site-header-inner">TALIVA</div></div>}>
+          <Header />
+        </Suspense>
+        {children}
+      </body>
     </html>
   );
 }

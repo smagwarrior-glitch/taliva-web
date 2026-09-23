@@ -1,49 +1,41 @@
 import Link from "next/link";
 import LangSwitch from "@/app/components/LangSwitch";
 import InvestCTA from "@/app/components/InvestCTA";
-
-type Lang = "fa" | "en";
-function getLang(searchParams: Record<string, string | string[] | undefined>): Lang {
-  const raw = searchParams.lang;
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  return v === "fa" ? "fa" : "en";
-}
+import { notFound } from "next/navigation";
+import { getAthlete } from "@/app/lib/athletes";
+import { getLang, type SearchParams } from "@/app/lib/i18n";
 function pct(n: number) {
   return `${Math.max(0, Math.min(100, Math.round(n)))}%`;
 }
 
-const athletes: Record<string, any> = {
-  a1: { en: "Sample Athlete 1", fa: "نمونه ورزشکار ۱", sportEn: "Football", sportFa: "فوتبال", score: 84, goal: 5000, raised: 3100, tierWeight: 62 },
-  a2: { en: "Sample Athlete 2", fa: "نمونه ورزشکار ۲", sportEn: "Wrestling", sportFa: "کشتی", score: 78, goal: 5000, raised: 2050, tierWeight: 48 },
-  a3: { en: "Sample Athlete 3", fa: "نمونه ورزشکار ۳", sportEn: "Volleyball", sportFa: "والیبال", score: 81, goal: 5000, raised: 2750, tierWeight: 58 },
-};
-
-export default function AthleteProfile({
+export default async function AthleteProfile({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: Record<string, string | string[] | undefined>;
+  params: Promise<{ id: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const lang = getLang(searchParams);
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const lang = getLang(query);
   const isFa = lang === "fa";
 
-  const a = athletes[params.id] ?? athletes.a1;
+  const a = getAthlete(id);
+  if (!a) notFound();
   const fundedPct = (a.raised / a.goal) * 100;
-  const athleteName = isFa ? a.fa : a.en;
+  const athleteName = a.name[lang];
 
   return (
     <main className={`container ${isFa ? "direction-rtl" : ""}`}>
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
         <Link href={`/investor/athletes?lang=${lang}`} className="small">← {isFa ? "بازگشت" : "Back"}</Link>
-        <LangSwitch hrefBase={`/athlete/${params.id}`} lang={lang} />
+        <LangSwitch hrefBase={`/athlete/${id}`} lang={lang} />
       </div>
 
       <div className="grid" style={{ marginTop: 14 }}>
         <div className="card col-8">
           <div style={{ fontSize: 26, fontWeight: 1000 }}>{athleteName}</div>
           <div className="small" style={{ marginTop: 6 }}>
-            {isFa ? a.sportFa : a.sportEn} • TALIVA {a.score}
+            {a.sport[lang]} • TALIVA {a.score}
           </div>
 
           <div className="card" style={{ marginTop: 14, background: "rgba(0,0,0,0.25)" }}>

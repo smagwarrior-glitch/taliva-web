@@ -1,12 +1,5 @@
 import Link from "next/link";
-
-type Lang = "fa" | "en";
-
-function getLang(searchParams: Record<string, string | string[] | undefined>): Lang {
-  const raw = searchParams.lang;
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  return v === "fa" ? "fa" : "en";
-}
+import { getLang, type SearchParams } from "@/app/lib/i18n";
 
 function money(n: number) {
   return n.toLocaleString();
@@ -30,18 +23,17 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default function InvestorDashboard({
+export default async function InvestorDashboard({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const lang = getLang(searchParams);
+  const lang = getLang(await searchParams);
   const isFa = lang === "fa";
 
   const t = {
     en: {
       title: "Investor Dashboard",
-      backHome: "Home",
       portfolio: "Portfolio",
       activity: "Activity",
       nfts: "NFT Holdings",
@@ -62,7 +54,6 @@ export default function InvestorDashboard({
     },
     fa: {
       title: "داشبورد سرمایه‌گذار",
-      backHome: "خانه",
       portfolio: "پورتفولیو",
       activity: "فعالیت‌ها",
       nfts: "دارایی‌های NFT",
@@ -146,31 +137,6 @@ export default function InvestorDashboard({
 
   return (
     <main className={isFa ? "direction-rtl" : ""}>
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <Link href={`/?lang=${lang}`} className="text-xl font-extrabold tracking-wide">
-          TALIVA
-        </Link>
-
-        <nav className="flex items-center gap-4 text-sm text-white/80">
-          <Link className="hover:text-white" href={`/?lang=${lang}`}>
-            {t.backHome}
-          </Link>
-          <Link className="hover:text-white" href={`/athlete/a1?lang=${lang}`}>
-            {isFa ? "پروفایل ورزشکار" : "Athlete Profile"}
-          </Link>
-
-          <div className="ml-2 rounded-full bg-white/10 px-3 py-1">
-            <Link className={lang === "fa" ? "font-bold text-white" : ""} href={`/investor/dashboard?lang=fa`}>
-              FA
-            </Link>
-            <span className="px-2 opacity-60">|</span>
-            <Link className={lang === "en" ? "font-bold text-white" : ""} href={`/investor/dashboard?lang=en`}>
-              EN
-            </Link>
-          </div>
-        </nav>
-      </header>
-
       <section className="mx-auto max-w-6xl px-6 pb-10">
         <h1 className="text-3xl font-extrabold md:text-4xl">{t.title}</h1>
 
