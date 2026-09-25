@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TALIVA
 
-## Getting Started
+TALIVA is an early-stage sports talent discovery and funding platform. The current MVP lets athletes submit a demo application and lets investors browse athlete profiles, view milestone-based escrow stages, and try a simulated investment flow.
 
-First, run the development server:
+## Current scope
+
+- Persian and English interface
+- Athlete directory and profile pages
+- Demo athlete application with client-side validation
+- Demo investor dashboard
+- Accessible demo investment dialog
+- Shared typed athlete data
+- Next.js App Router deployment on Vercel
+
+> This repository is still a demo. Authentication, persistent storage, real payments, smart contracts, and production compliance are not implemented yet.
+
+## Tech stack
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- Vercel
+
+## Local development
+
+Requirements:
+
+- Node.js 22 or newer
+- npm
+
+Install dependencies and start the development server:
 
 ```bash
+npm ci
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Quality checks
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+Pull requests run the same checks through GitHub Actions.
 
-To learn more about Next.js, take a look at the following resources:
+## Main routes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `/` — bilingual landing page
+- `/investor/athletes` — athlete directory
+- `/athlete/[id]` — athlete profile
+- `/athlete/apply` — demo application form
+- `/investor/dashboard` — demo investor portfolio
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Use `?lang=fa` or `?lang=en` to select the interface language.
 
-## Deploy on Vercel
+## Next milestones
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Add authentication and role-based access.
+2. Add a database and server-side form submission.
+3. Replace sample athletes and portfolio records with persisted data.
+4. Design and audit the escrow smart contract on a testnet.
+5. Add automated unit, integration, and end-to-end tests.
+6. Complete security, privacy, legal, and accessibility reviews before real-money use.

@@ -1,11 +1,11 @@
 import Link from "next/link";
+import { athletes } from "@/app/lib/athletes";
 import { getLang, type SearchParams } from "@/app/lib/i18n";
 
-function money(n: number) {
-  return n.toLocaleString();
-}
+type Tier = "D" | "C" | "B" | "A";
+type EscrowStatus = "released" | "pending" | "locked";
 
-function TierPill({ tier }: { tier: "D" | "C" | "B" | "A" }) {
+function TierPill({ tier }: { tier: Tier }) {
   return (
     <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs text-white/85">
       <span className="h-2 w-2 rounded-full bg-[#50FF9D]" />
@@ -30,13 +30,14 @@ export default async function InvestorDashboard({
 }) {
   const lang = getLang(await searchParams);
   const isFa = lang === "fa";
+  const number = new Intl.NumberFormat(isFa ? "fa-IR" : "en-US", {
+    maximumFractionDigits: 2,
+  });
 
   const t = {
     en: {
       title: "Investor Dashboard",
       portfolio: "Portfolio",
-      activity: "Activity",
-      nfts: "NFT Holdings",
       totalInvested: "Total Invested",
       activeAthletes: "Active Athletes",
       releasedFunds: "Released Funds",
@@ -44,19 +45,13 @@ export default async function InvestorDashboard({
       viewProfile: "View Profile",
       invested: "Invested",
       progress: "Progress",
-      escrow: "Escrow",
       released: "Released",
       pending: "Pending",
       locked: "Locked",
-      comingSoon: "Coming Soon",
-      tokenTeaser: "TALIVA Token (TLV)",
-      tokenDesc: "Voting, rewards, and fee discounts will activate in Phase 2.",
     },
     fa: {
       title: "داشبورد سرمایه‌گذار",
       portfolio: "پورتفولیو",
-      activity: "فعالیت‌ها",
-      nfts: "دارایی‌های NFT",
       totalInvested: "کل سرمایه‌گذاری",
       activeAthletes: "ورزشکاران فعال",
       releasedFunds: "مبالغ آزادشده",
@@ -64,74 +59,68 @@ export default async function InvestorDashboard({
       viewProfile: "مشاهده پروفایل",
       invested: "سرمایه‌گذاری",
       progress: "پیشرفت",
-      escrow: "امانی",
       released: "آزاد شد",
       pending: "در انتظار",
       locked: "قفل",
-      comingSoon: "به‌زودی",
-      tokenTeaser: "توکن TALIVA (TLV)",
-      tokenDesc: "رأی‌دهی، پاداش و تخفیف کارمزد در فاز ۲ فعال می‌شود.",
     },
   }[lang];
 
-  const portfolio = [
+  const portfolio: Array<{
+    athlete: (typeof athletes)[number];
+    invested: number;
+    tier: Tier;
+    escrow: Array<{ tier: Tier; pct: number; status: EscrowStatus }>;
+  }> = [
     {
-      athleteId: "a1",
-      name: isFa ? "نمونه ورزشکار ۱" : "Sample Athlete 1",
-      sport: isFa ? "فوتبال" : "Football",
+      athlete: athletes[0],
       invested: 500,
-      tier: "C" as const,
-      progress: 62,
-      raised: 3100,
-      target: 5000,
+      tier: "C",
       escrow: [
-        { tier: "D" as const, pct: 10, status: "released" as const },
-        { tier: "C" as const, pct: 15, status: "pending" as const },
-        { tier: "B" as const, pct: 25, status: "locked" as const },
-        { tier: "A" as const, pct: 40, status: "locked" as const },
+        { tier: "D", pct: 10, status: "released" },
+        { tier: "C", pct: 20, status: "pending" },
+        { tier: "B", pct: 30, status: "locked" },
+        { tier: "A", pct: 40, status: "locked" },
       ],
     },
     {
-      athleteId: "a2",
-      name: isFa ? "نمونه ورزشکار ۲" : "Sample Athlete 2",
-      sport: isFa ? "کشتی" : "Wrestling",
+      athlete: athletes[1],
       invested: 300,
-      tier: "D" as const,
-      progress: 41,
-      raised: 2050,
-      target: 5000,
+      tier: "D",
       escrow: [
-        { tier: "D" as const, pct: 10, status: "pending" as const },
-        { tier: "C" as const, pct: 15, status: "locked" as const },
-        { tier: "B" as const, pct: 25, status: "locked" as const },
-        { tier: "A" as const, pct: 40, status: "locked" as const },
+        { tier: "D", pct: 10, status: "pending" },
+        { tier: "C", pct: 20, status: "locked" },
+        { tier: "B", pct: 30, status: "locked" },
+        { tier: "A", pct: 40, status: "locked" },
       ],
     },
     {
-      athleteId: "a3",
-      name: isFa ? "نمونه ورزشکار ۳" : "Sample Athlete 3",
-      sport: isFa ? "والیبال" : "Volleyball",
+      athlete: athletes[2],
       invested: 250,
-      tier: "C" as const,
-      progress: 55,
-      raised: 2750,
-      target: 5000,
+      tier: "C",
       escrow: [
-        { tier: "D" as const, pct: 10, status: "released" as const },
-        { tier: "C" as const, pct: 15, status: "released" as const },
-        { tier: "B" as const, pct: 25, status: "pending" as const },
-        { tier: "A" as const, pct: 40, status: "locked" as const },
+        { tier: "D", pct: 10, status: "released" },
+        { tier: "C", pct: 20, status: "released" },
+        { tier: "B", pct: 30, status: "pending" },
+        { tier: "A", pct: 40, status: "locked" },
       ],
     },
   ];
 
-  const totalInvestedNum = portfolio.reduce((s, p) => s + p.invested, 0);
-  const releasedFundsNum = 3200;
-  const avgProgressNum = Math.round(portfolio.reduce((s, p) => s + p.progress, 0) / portfolio.length);
+  const totalInvested = portfolio.reduce((sum, item) => sum + item.invested, 0);
+  const releasedFunds = portfolio.reduce((sum, item) => {
+    const releasedPercent = item.escrow
+      .filter((stage) => stage.status === "released")
+      .reduce((stageSum, stage) => stageSum + stage.pct, 0);
 
-  const statusLabel = (s: "released" | "pending" | "locked") => {
-    if (s === "released") return `${t.released} ✅`;
-    if (s === "pending") return `${t.pending} ⏳`;
+    return sum + (item.invested * releasedPercent) / 100;
+  }, 0);
+  const avgProgress = Math.round(
+    portfolio.reduce((sum, item) => sum + item.athlete.tierWeight, 0) / portfolio.length,
+  );
+
+  const statusLabel = (status: EscrowStatus) => {
+    if (status === "released") return `${t.released} ✅`;
+    if (status === "pending") return `${t.pending} ⏳`;
     return `${t.locked} 🔒`;
   };
 
@@ -141,55 +130,53 @@ export default async function InvestorDashboard({
         <h1 className="text-3xl font-extrabold md:text-4xl">{t.title}</h1>
 
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-4">
-          <StatCard label={t.totalInvested} value={`${money(totalInvestedNum)} USDC`} />
-          <StatCard label={t.activeAthletes} value={`${portfolio.length}`} />
-          <StatCard label={t.releasedFunds} value={`${money(releasedFundsNum)} USDC`} />
-          <StatCard label={t.avgProgress} value={`${avgProgressNum}%`} />
+          <StatCard label={t.totalInvested} value={`${number.format(totalInvested)} USDC`} />
+          <StatCard label={t.activeAthletes} value={number.format(portfolio.length)} />
+          <StatCard label={t.releasedFunds} value={`${number.format(releasedFunds)} USDC`} />
+          <StatCard label={t.avgProgress} value={`${number.format(avgProgress)}%`} />
         </div>
 
         <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="flex items-end justify-between">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
             <h2 className="text-xl font-extrabold">{t.portfolio}</h2>
             <div className="text-xs text-white/60">
-              {isFa ? "آزادسازی‌ها بر اساس سطح لیگ/رقابت (Tier) انجام می‌شود." : "Releases are tier-based (league level)."}
+              {isFa ? "آزادسازی‌ها بر اساس سطح لیگ/رقابت انجام می‌شود." : "Releases are based on competition tier."}
             </div>
           </div>
 
           <div className="mt-5 space-y-4">
-            {portfolio.map((p) => (
-              <div key={p.athleteId} className="rounded-2xl border border-white/10 bg-black/20 p-4">
+            {portfolio.map((item) => (
+              <div key={item.athlete.id} className="rounded-2xl border border-white/10 bg-black/20 p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-base font-bold">{p.name}</div>
+                    <div className="text-base font-bold">{item.athlete.name[lang]}</div>
                     <div className="mt-1 text-xs text-white/65">
-                      {p.sport} • {t.invested}: {money(p.invested)} USDC
+                      {item.athlete.sport[lang]} • {t.invested}: {number.format(item.invested)} USDC
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <TierPill tier={p.tier} />
+                      <TierPill tier={item.tier} />
                       <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/80">
-                        {t.progress}: {p.progress}%
+                        {t.progress}: {number.format(item.athlete.tierWeight)}%
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/athlete/${p.athleteId}?lang=${lang}`}
-                      className="rounded-xl bg-[#50FF9D] px-4 py-2 text-sm font-semibold text-black hover:brightness-95"
-                    >
-                      {t.viewProfile}
-                    </Link>
-                  </div>
+                  <Link
+                    href={`/athlete/${item.athlete.id}?lang=${lang}`}
+                    className="rounded-xl bg-[#50FF9D] px-4 py-2 text-sm font-semibold text-black hover:brightness-95"
+                  >
+                    {t.viewProfile}
+                  </Link>
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
-                  {p.escrow.map((e) => (
-                    <div key={e.tier} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+                  {item.escrow.map((stage) => (
+                    <div key={stage.tier} className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <TierPill tier={e.tier} />
-                        <span className="text-xs text-white/70">{e.pct}%</span>
+                        <TierPill tier={stage.tier} />
+                        <span className="text-xs text-white/70">{number.format(stage.pct)}%</span>
                       </div>
-                      <div className="text-xs text-white/70">{statusLabel(e.status)}</div>
+                      <div className="text-xs text-white/70">{statusLabel(stage.status)}</div>
                     </div>
                   ))}
                 </div>
@@ -198,8 +185,6 @@ export default async function InvestorDashboard({
           </div>
         </div>
       </section>
-
-      <div className="h-16" />
     </main>
   );
 }
