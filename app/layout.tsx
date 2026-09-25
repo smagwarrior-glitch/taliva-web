@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" dir="ltr" suppressHydrationWarning>
       <body className="bg-black text-white">
         <Suspense fallback={<div className="site-header" aria-hidden="true"><div className="site-header-inner">TALIVA</div></div>}>
           <Header />
