@@ -12,6 +12,11 @@ export default function Header() {
   const lang: Lang = params.get("lang") === "fa" ? "fa" : "en";
   const withLang = (path: string) => `${path}?lang=${lang}`;
 
+  const preservedParams = new URLSearchParams(params.toString());
+  preservedParams.delete("lang");
+  const preservedQuery = preservedParams.toString();
+  const languageSwitchBase = preservedQuery ? `${pathname}?${preservedQuery}` : pathname;
+
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = lang === "fa" ? "rtl" : "ltr";
@@ -27,7 +32,7 @@ export default function Header() {
           <Link href={withLang("/")}>{lang === "fa" ? "خانه" : "Home"}</Link>
           <Link href={withLang("/investor/dashboard")}>{lang === "fa" ? "داشبورد" : "Dashboard"}</Link>
           <Link href={withLang("/investor/athletes")}>{lang === "fa" ? "ورزشکاران" : "Athletes"}</Link>
-          <LangSwitch hrefBase={pathname} lang={lang} />
+          <LangSwitch hrefBase={languageSwitchBase} lang={lang} />
         </nav>
       </div>
     </header>
