@@ -9,7 +9,7 @@ type SessionPayload = {
   expires_in: number;
 };
 
-function config() {
+function getSupabaseProxyConfig() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
   const key =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
@@ -84,7 +84,7 @@ async function refreshAccessToken(
 }
 
 export async function proxy(request: NextRequest) {
-  const supabase = config();
+  const supabase = getSupabaseProxyConfig();
 
   // Until project keys are configured, keep the existing demo dashboard available.
   if (!supabase) return NextResponse.next();
