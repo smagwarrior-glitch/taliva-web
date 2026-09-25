@@ -24,7 +24,7 @@ create table public.investments (
   currency text not null default 'USDC' check (currency in ('USDC')),
   status public.investment_status not null default 'draft',
   transaction_hash text,
-  metadata jsonb not null default '{}'::jsonb,
+  metadata jsonb not null default '{}'::jsonb check (jsonb_typeof(metadata) = 'object'),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   confirmed_at timestamptz,
@@ -40,7 +40,7 @@ create table public.escrow_milestones (
   position smallint not null check (position between 1 and 4),
   allocation_bps integer not null check (allocation_bps > 0 and allocation_bps <= 10000),
   status public.escrow_status not null default 'locked',
-  release_criteria jsonb not null default '{}'::jsonb,
+  release_criteria jsonb not null default '{}'::jsonb check (jsonb_typeof(release_criteria) = 'object'),
   released_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
@@ -56,8 +56,8 @@ create table public.investment_events (
   id bigint generated always as identity primary key,
   investment_id uuid not null references public.investments(id) on delete cascade,
   actor_id uuid references public.profiles(id) on delete set null,
-  event_type text not null,
-  payload jsonb not null default '{}'::jsonb,
+  event_type text not null check (char_length(event_type) between 1 and 120),
+  payload jsonb not null default '{}'::jsonb check (jsonb_typeof(payload) = 'object'),
   created_at timestamptz not null default now()
 );
 
@@ -67,6 +67,9 @@ create index investments_status_idx
   on public.investments (status);
 create index investments_athlete_reference_idx
   on public.investments (athlete_reference);
+create unique index investments_transaction_hash_unique_idx
+  on public.investments (lower(transaction_hash))
+  where transaction_hash is not null;
 create index escrow_milestones_investment_idx
   on public.escrow_milestones (investment_id, position);
 create index investment_events_investment_created_idx
@@ -149,12 +152,12 @@ as $$
 begin
   if tg_op = 'INSERT' then
     insert into public.investment_events (investment_id, actor_id, event_type, payload)
-    values (new.id, auth.uid(), 'investment.created', jsonb_build_object('status', new.status));
+    values (new.id, (select auth.uid()), 'investment.created', jsonb_build_object('status', new.status));
   elsif old.status is distinct from new.status then
     insert into public.investment_events (investment_id, actor_id, event_type, payload)
     values (
       new.id,
-      auth.uid(),
+      (select auth.uid()),
       'investment.status_changed',
       jsonb_build_object('from', old.status, 'to', new.status)
     );
@@ -178,7 +181,7 @@ as $$
   select exists (
     select 1
     from public.profiles
-    where id = auth.uid() and role = 'admin'
+    where id = (select auth.uid()) and role = 'admin'
   );
 $$;
 
@@ -187,38 +190,45 @@ alter table public.investments enable row level security;
 alter table public.escrow_milestones enable row level security;
 alter table public.investment_events enable row level security;
 
+revoke all on function public.set_updated_at() from public;
+revoke all on function public.handle_new_user() from public;
+revoke all on function public.create_default_escrow_milestones() from public;
+revoke all on function public.log_investment_event() from public;
+revoke all on function public.is_admin() from public;
+grant execute on function public.is_admin() to authenticated;
+
 create policy "profiles_select_own_or_admin"
 on public.profiles for select
 to authenticated
-using (id = auth.uid() or public.is_admin());
+using (id = (select auth.uid()) or public.is_admin());
 
 create policy "profiles_update_own_or_admin"
 on public.profiles for update
 to authenticated
-using (id = auth.uid() or public.is_admin())
-with check (id = auth.uid() or public.is_admin());
+using (id = (select auth.uid()) or public.is_admin())
+with check (id = (select auth.uid()) or public.is_admin());
 
 create policy "investments_select_own_or_admin"
 on public.investments for select
 to authenticated
-using (investor_id = auth.uid() or public.is_admin());
+using (investor_id = (select auth.uid()) or public.is_admin());
 
 create policy "investments_insert_own"
 on public.investments for insert
 to authenticated
-with check (investor_id = auth.uid() and status = 'draft');
+with check (investor_id = (select auth.uid()) and status = 'draft');
 
 create policy "investments_update_own_draft_or_admin"
 on public.investments for update
 to authenticated
 using (
   public.is_admin()
-  or (investor_id = auth.uid() and status = 'draft')
+  or (investor_id = (select auth.uid()) and status = 'draft')
 )
 with check (
   public.is_admin()
   or (
-    investor_id = auth.uid()
+    investor_id = (select auth.uid())
     and status in ('draft', 'cancelled')
   )
 );
@@ -232,7 +242,7 @@ using (
     select 1
     from public.investments
     where investments.id = escrow_milestones.investment_id
-      and investments.investor_id = auth.uid()
+      and investments.investor_id = (select auth.uid())
   )
 );
 
@@ -251,7 +261,7 @@ using (
     select 1
     from public.investments
     where investments.id = investment_events.investment_id
-      and investments.investor_id = auth.uid()
+      and investments.investor_id = (select auth.uid())
   )
 );
 
@@ -265,7 +275,5 @@ grant update (display_name, locale) on public.profiles to authenticated;
 grant select, insert, update on public.investments to authenticated;
 grant select on public.escrow_milestones to authenticated;
 grant select on public.investment_events to authenticated;
-grant usage, select on sequence public.investment_events_id_seq to authenticated;
-
 comment on column public.investments.athlete_reference is
   'Temporary external athlete identifier. Replace with an athlete foreign key in the future athlete migration.';
