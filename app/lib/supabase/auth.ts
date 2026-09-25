@@ -25,6 +25,7 @@ export type AuthSession = {
 type AuthError = {
   error?: string;
   error_code?: string;
+  error_description?: string;
   msg?: string;
   message?: string;
 };
@@ -65,7 +66,11 @@ async function authRequest<T>(
   if (!response.ok) {
     throw new SupabaseAuthError(
       response.status,
-      payload.message ?? payload.msg ?? payload.error_description ?? payload.error ?? "Authentication failed.",
+      payload.message ??
+        payload.msg ??
+        payload.error_description ??
+        payload.error ??
+        "Authentication failed.",
     );
   }
 
