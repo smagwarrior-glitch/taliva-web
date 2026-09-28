@@ -32,6 +32,7 @@ export default function Header() {
           <Link href={withLang("/")}>{lang === "fa" ? "خانه" : "Home"}</Link>
           <Link href={withLang("/investor/dashboard")}>{lang === "fa" ? "داشبورد" : "Dashboard"}</Link>
           <Link href={withLang("/investor/athletes")}>{lang === "fa" ? "ورزشکاران" : "Athletes"}</Link>
+          <Link href={withLang("/auth")}>{lang === "fa" ? "حساب کاربری" : "Account"}</Link>
           <LangSwitch hrefBase={languageSwitchBase} lang={lang} />
         </nav>
       </div>
